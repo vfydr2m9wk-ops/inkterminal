@@ -1,0 +1,14 @@
+#!/bin/sh
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount -t devtmpfs dev /dev 2>/dev/null
+mkdir -p /dev/pts && mount -t devpts devpts /dev/pts
+mount -t tmpfs tmp /tmp
+hostname inkterminal
+export HOME=/root PATH=/bin:/sbin:/usr/bin:/usr/sbin TERM=xterm-256color
+cd /root
+cat /etc/motd
+while true; do
+  setsid cttyhack /bin/sh -l
+  echo "Shell encerrado, abrindo outro..."
+done

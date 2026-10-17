@@ -1,0 +1,3 @@
+Bem-vindo ao InkTerminal!
+Este é um Linux de verdade (kernel 6.6) emulado em WebAssembly.
+Experimente: uname -a ; cat /proc/cpuinfo ; vi notas.txt
