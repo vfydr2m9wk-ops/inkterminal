@@ -2,7 +2,7 @@
 
 Um terminal Linux de verdade que roda inteiro no navegador. Foi pensado para o iPad e o iPhone (Safari) e para ser usado dentro do [InkDOS](https://github.com/vfydr2m9wk-ops/InkDOS).
 
-**Abrir:** https://vfydr2m9wk-ops.github.io/inkterminal/
+**Abrir:** https://inkterminal.github.io/
 
 - Roda Alpine Linux 3.22 com kernel Linux 6.6 (i386), emulado pelo [v86](https://github.com/copy/v86) em WebAssembly.
 - Instala programas com `apk add` (por exemplo `apk add python3 git nano`). Isso precisa de rede.
@@ -33,7 +33,7 @@ A escolha fica guardada no navegador. Também dá para passar `?rede=relay`, `?r
 ## Usar dentro do InkDOS
 
 ```html
-<iframe src="https://vfydr2m9wk-ops.github.io/inkterminal/?embed=1" style="width:100%;height:100%;border:0"></iframe>
+<iframe src="https://inkterminal.github.io/?embed=1" style="width:100%;height:100%;border:0"></iframe>
 ```
 
 ## Limitações
