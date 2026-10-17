@@ -1,4 +1,4 @@
-import { V86 } from "./vendor/v86/libv86.mjs";
+import { V86 } from "./vendor/v86/libv86.mjs?v=2";
 import { Terminal } from "./vendor/xterm/xterm.mjs";
 import { FitAddon } from "./vendor/xterm/addon-fit.mjs";
 
@@ -54,7 +54,7 @@ const config = {
   vga_memory_size: 2 * 1024 * 1024,
   bios: { url: "bios/seabios.bin" },
   vga_bios: { url: "bios/vgabios.bin" },
-  bzimage: { url: "images/inkterminal-bzImage.bin" },
+  bzimage: { url: "images/inkterminal-bzImage.bin?v=2" },
   cmdline: "console=ttyS0 quiet tsc=reliable mitigations=off random.trust_cpu=on",
   disable_keyboard: true,
   disable_mouse: true,
