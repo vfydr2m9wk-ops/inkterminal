@@ -1,30 +1,20 @@
 #!/bin/sh
-# Rebuilds images/inkterminal-bzImage.bin (Linux 6.6 i386 + BusyBox initramfs).
-# Needs a Linux PC (or a CI runner) with: gcc gcc-multilib make flex bison bc cpio libelf-dev git.
+# Recompila images/inkterminal-bzImage.bin: Linux 6.6 (i386) com o Alpine
+# Linux 3.22 embutido como initramfs.
+# Precisa de uma máquina Linux (ou runner de CI) com:
+#   gcc make flex bison bc cpio libelf-dev git
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 WORK=${WORK:-$HERE/work}
 mkdir -p "$WORK" && cd "$WORK"
 [ -d linux ] || git clone --depth 1 --branch v6.6 https://github.com/torvalds/linux linux
-[ -d busybox ] || git clone https://github.com/mirror/busybox busybox && (cd busybox && git checkout 371fe9f71d445d18be28c82a2a6d82115c8af19d)
+[ -d docker-alpine ] || git clone --depth 1 --branch v3.22 https://github.com/alpinelinux/docker-alpine docker-alpine
 
-# BusyBox: static 32-bit
-cd busybox
-make defconfig
-sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/; s/CONFIG_TC=y/# CONFIG_TC is not set/' .config
-sed -i 's|CONFIG_EXTRA_CFLAGS=""|CONFIG_EXTRA_CFLAGS="-m32 -march=i686"|; s|CONFIG_EXTRA_LDFLAGS=""|CONFIG_EXTRA_LDFLAGS="-m32"|' .config
-yes "" | make oldconfig
-make -j"$(nproc)"
-cd ..
-
-# Root filesystem
-rm -rf rootfs && mkdir -p rootfs/bin rootfs/proc rootfs/sys rootfs/dev rootfs/tmp rootfs/root rootfs/home rootfs/var rootfs/mnt
-cp busybox/busybox rootfs/bin/
-for p in $(rootfs/bin/busybox --list-full); do
-  [ "$p" = bin/busybox ] && continue
-  mkdir -p "rootfs/$(dirname "$p")"; ln -sf /bin/busybox "rootfs/$p"
-done
-cp -r "$HERE/rootfs-overlay/." rootfs/
+# Sistema de arquivos: Alpine minirootfs oficial (x86) + arquivos do InkTerminal
+(cd docker-alpine && grep "x86/" checksums.sha512 | sha512sum -c -)
+rm -rf rootfs && mkdir rootfs
+tar xzf docker-alpine/x86/alpine-minirootfs-*-x86.tar.gz -C rootfs
+cp -r "$HERE/alpine-overlay/." rootfs/
 chmod +x rootfs/init
 
 # Kernel

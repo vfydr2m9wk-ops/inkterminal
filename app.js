@@ -1,4 +1,4 @@
-import { V86 } from "./vendor/v86/libv86.mjs?v=2";
+import { V86 } from "./vendor/v86/libv86.mjs?v=3";
 import { Terminal } from "./vendor/xterm/xterm.mjs";
 import { FitAddon } from "./vendor/xterm/addon-fit.mjs";
 
@@ -24,7 +24,8 @@ term.focus();
 document.getElementById("term").addEventListener("click", () => term.focus());
 
 // ---------- Saved state (IndexedDB) ----------
-const DB = "inkterminal", STORE = "state", KEY = "vm";
+// KEY muda quando a máquina muda (kernel/dispositivos), porque um estado antigo não serve mais.
+const DB = "inkterminal", STORE = "state", KEY = "vm-v3";
 function idb() {
   return new Promise((ok, fail) => {
     const r = indexedDB.open(DB, 1);
@@ -48,14 +49,22 @@ const clearStateDb = () => idbOp("readwrite", (s) => s.delete(KEY));
 
 // ---------- Emulator (v86) ----------
 const saved = params.has("fresh") ? undefined : await loadState();
+// Rede: "fetch" usa o próprio navegador (só HTTP, sem servidor).
+// "relay" usa o relay público do v86 (TCP completo). Também aceita uma URL wss:// ou wisp://.
+let savedRede;
+try { savedRede = localStorage.getItem("inkterminal-rede"); } catch {}
+const REDE = params.get("rede") || savedRede || "fetch";
+const relayUrl = REDE === "relay" ? "wss://relay.widgetry.org/" : REDE === "off" ? undefined : REDE;
 const config = {
   wasm_path: "vendor/v86/v86.wasm",
-  memory_size: 64 * 1024 * 1024,
+  memory_size: 256 * 1024 * 1024,
   vga_memory_size: 2 * 1024 * 1024,
   bios: { url: "bios/seabios.bin" },
   vga_bios: { url: "bios/vgabios.bin" },
-  bzimage: { url: "images/inkterminal-bzImage.bin?v=2" },
+  bzimage: { url: "images/inkterminal-bzImage.bin?v=3" },
   cmdline: "console=ttyS0 quiet tsc=reliable mitigations=off random.trust_cpu=on",
+  filesystem: {},
+  net_device: relayUrl ? { type: "virtio", relay_url: relayUrl } : undefined,
   disable_keyboard: true,
   disable_mouse: true,
   disable_speaker: true,
@@ -150,6 +159,70 @@ document.getElementById("btn-save").addEventListener("click", async () => {
 document.getElementById("btn-reset").addEventListener("click", async () => {
   await clearStateDb().catch(() => {});
   location.search = params.has("embed") ? "?embed=1&fresh=1" : "?fresh=1";
+});
+
+// ---------- Arquivos do iPad (pasta /mnt/ipad, atalho ~/ipad) ----------
+const picker = document.getElementById("file-picker");
+document.getElementById("btn-upload").addEventListener("click", () => picker.click());
+picker.addEventListener("change", async () => {
+  for (const file of picker.files) {
+    const data = new Uint8Array(await file.arrayBuffer());
+    await emulator.create_file("/" + file.name, data);
+  }
+  setStatus(picker.files.length === 1 ? `Enviado: ~/ipad/${picker.files[0].name}` : `Enviados ${picker.files.length} arquivos para ~/ipad`);
+  picker.value = "";
+  term.focus();
+});
+
+const dialog = document.getElementById("download-dialog");
+const list = document.getElementById("download-list");
+function listFiles(dir) {
+  const fs = emulator.fs9p;
+  const out = [];
+  for (const name of fs.read_dir(dir) || []) {
+    const path = (dir === "/" ? "" : dir) + "/" + name;
+    const p = fs.SearchPath(path);
+    if (p.id === -1) continue;
+    if (fs.IsDirectory(p.id)) out.push(...listFiles(path));
+    else out.push(path);
+  }
+  return out;
+}
+document.getElementById("btn-download").addEventListener("click", () => {
+  const files = listFiles("/");
+  list.innerHTML = "";
+  if (!files.length) {
+    list.innerHTML = "<p>A pasta ~/ipad está vazia. No terminal, copie um arquivo para lá, por exemplo:<br><code>cp notas.txt ~/ipad/</code></p>";
+  }
+  for (const path of files) {
+    const b = document.createElement("button");
+    b.textContent = path.slice(1);
+    b.addEventListener("click", async () => {
+      const data = await emulator.read_file(path);
+      const url = URL.createObjectURL(new Blob([data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = path.split("/").pop();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      dialog.close();
+    });
+    list.appendChild(b);
+  }
+  dialog.showModal();
+});
+document.getElementById("download-close").addEventListener("click", () => dialog.close());
+
+// ---------- Escolha da rede ----------
+const redeSel = document.getElementById("rede");
+redeSel.value = ["fetch", "relay", "off"].includes(REDE) ? REDE : "fetch";
+redeSel.addEventListener("change", () => {
+  try { localStorage.setItem("inkterminal-rede", redeSel.value); } catch {}
+  const q = new URLSearchParams(location.search);
+  q.delete("rede");
+  location.search = q.toString();
 });
 
 window.inkterminal = { emulator, term };
