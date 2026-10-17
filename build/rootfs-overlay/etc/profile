@@ -2,10 +2,10 @@ export PS1='\[\e[1;32m\]root@inkterminal\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]# '
 alias ls='ls --color=auto'
 alias ll='ls -la'
 help() {
-  echo "Alguns comandos: ls, cd, cat, vi, top, ps, df, free, uname -a"
-  echo "Todos os comandos: busybox --list"
-  echo "Se a tela ficar com tamanho errado, digite: resize"
-  echo "Toque em 'Salvar' no topo para guardar seus arquivos neste iPad."
+  echo "Comandos: ls cd cat vi top ps df free"
+  echo "Lista completa: busybox --list"
+  echo "Tela com tamanho errado? Digite: resize"
+  echo "Toque em Salvar para guardar seus arquivos."
 }
 # Ask the terminal for its size (query goes over stderr).
 [ -t 0 ] && resize >/dev/null

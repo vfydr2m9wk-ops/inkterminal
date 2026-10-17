@@ -12,7 +12,7 @@ const setStatus = (t) => { statusEl.textContent = t; };
 const term = new Terminal({
   cursorBlink: true,
   fontFamily: 'ui-monospace, Menlo, "SF Mono", monospace',
-  fontSize: Number(params.get("font")) || 15,
+  fontSize: Number(params.get("font")) || (Math.min(screen.width, screen.height) < 500 ? 12 : 15),
   theme: { background: "#0d1117", foreground: "#e6edf3", cursor: "#3fb950" },
   scrollback: 5000,
 });
@@ -118,10 +118,21 @@ document.getElementById("keys").addEventListener("click", (e) => {
 document.getElementById("keys").addEventListener("mousedown", (e) => e.preventDefault());
 
 // ---------- Resize ----------
-// The guest runs `resize` at login (see /etc/profile) to pick up the size.
-const refit = () => fit.fit();
+// On iOS the soft keyboard covers the page instead of shrinking it, so size
+// the layout to the visible area. That keeps the extra-keys bar above the keyboard.
+const vv = window.visualViewport;
+function refit() {
+  if (vv) {
+    document.body.style.height = vv.height + "px";
+    window.scrollTo(0, 0);
+  }
+  fit.fit();
+}
 window.addEventListener("resize", refit);
-if (window.visualViewport) window.visualViewport.addEventListener("resize", refit);
+if (vv) { vv.addEventListener("resize", refit); vv.addEventListener("scroll", () => window.scrollTo(0, 0)); }
+refit();
+// The guest runs `resize` at login (see /etc/profile); after a layout change,
+// typing `resize` updates the size inside Linux.
 
 // ---------- Buttons ----------
 document.getElementById("btn-save").addEventListener("click", async () => {
