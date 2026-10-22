@@ -85,17 +85,18 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
   document.querySelectorAll('[data-appearance-choice]').forEach(b=>{b.dataset.command='appearance.set';b.onclick=()=>execute('appearance.set',b.dataset.appearanceChoice)});
   const title=$('titleText');if(title)title.addEventListener('change',e=>{if(!isEnabled('file.rename')){chrome.title();return}execute('file.rename',e.target.value)});
   bindClick('presentBtn','presentation.present.current');const presentStart=bindClick('presentStartMenuBtn','presentation.present.start');if(presentStart)presentStart.onclick=()=>{drawer.close({restoreFocus:false});execute('presentation.present.start')};
-  global.addEventListener('keydown',async e=>{
+  const handleKeyboardNavigation=async e=>{
+   if(e.__inkdosPresentationKeyHandled)return;
    const target=e.target;
    const mod=e.metaKey||e.ctrlKey;
    const key=String(e.key||'');
    const right=key==='ArrowRight'||key==='Right'||e.code==='ArrowRight'||e.keyCode===39;
    const left=key==='ArrowLeft'||key==='Left'||e.code==='ArrowLeft'||e.keyCode===37;
-   const typing=!!target?.closest?.('input,textarea,select,[contenteditable="true"],[contenteditable=""],[role="textbox"]');
+   const typing=!!target?.closest?.('input,textarea,select,[role="textbox"]');
    const overlay=$('presentOverlay');
    if(!mod&&!e.altKey&&!e.shiftKey&&!typing&&session.active&&!isBusy()&&!unsavedDialog&&(!overlay||overlay.hidden)){
-    if(right&&isEnabled('navigation.next')){e.preventDefault();e.stopImmediatePropagation();execute('navigation.next');return}
-    if(left&&isEnabled('navigation.previous')){e.preventDefault();e.stopImmediatePropagation();execute('navigation.previous');return}
+    if(right&&isEnabled('navigation.next')){e.__inkdosPresentationKeyHandled=true;e.preventDefault();e.stopImmediatePropagation();execute('navigation.next');return}
+    if(left&&isEnabled('navigation.previous')){e.__inkdosPresentationKeyHandled=true;e.preventDefault();e.stopImmediatePropagation();execute('navigation.previous');return}
    }
    if(!mod)return;
    const k=String(e.key||'').toLowerCase();
@@ -104,6 +105,35 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
    else if(k==='s'){e.preventDefault();await execute('file.save')}
    else if(k==='z'&&!e.shiftKey&&!target?.isContentEditable){e.preventDefault();execute('history.undo')}
    else if((k==='y'||(k==='z'&&e.shiftKey))&&!target?.isContentEditable){e.preventDefault();execute('history.redo')}
+  };
+  // Capture at both levels: some iPad embedded browsers route hardware-key events differently.
+  global.addEventListener('keydown',handleKeyboardNavigation,true);
+  document.addEventListener('keydown',handleKeyboardNavigation,true);
+  function installKeyboardDiagnostic(){
+   if($('presentationKeyboardDiagnostic'))return;
+   const button=document.createElement('button');
+   button.id='presentationKeyboardDiagnostic';button.type='button';button.textContent='⌨ Keyboard test';
+   button.setAttribute('aria-label','Test Bluetooth keyboard navigation');
+   button.style.cssText='position:fixed;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:9999;padding:9px 12px;border:1px solid #888;border-radius:10px;background:#20242b;color:#fff;font:600 12px system-ui;box-shadow:0 2px 8px #0003';
+   button.addEventListener('click',()=>{
+    let panel=$('presentationKeyboardDiagnosticPanel');
+    if(panel){panel.remove();return}
+    panel=document.createElement('div');panel.id='presentationKeyboardDiagnosticPanel';
+    panel.style.cssText='position:fixed;right:10px;bottom:58px;z-index:10000;width:min(330px,calc(100vw - 20px));padding:12px;border:1px solid #888;border-radius:12px;background:#fff;color:#111;font:12px/1.45 system-ui;box-shadow:0 4px 18px #0004';
+    const title=document.createElement('strong');title.textContent='Keyboard diagnostics';panel.appendChild(title);
+    const status=document.createElement('p');status.id='presentationKeyboardDiagnosticStatus';status.textContent='Press ← or → on the Bluetooth keyboard. The result will appear here.';panel.appendChild(status);
+    const state=document.createElement('p');state.textContent='Presentation active: '+String(!!session.active)+' · Current slide: '+String((session.currentIndex||0)+1)+' / '+String(session.slides.length);panel.appendChild(state);
+    const close=document.createElement('button');close.type='button';close.textContent='Close';close.style.cssText='padding:6px 10px;border:1px solid #aaa;border-radius:7px;background:#f5f5f5;color:#111';close.onclick=()=>panel.remove();panel.appendChild(close);
+    document.body.appendChild(panel);
+   });
+   document.body.appendChild(button);
+  }
+  installKeyboardDiagnostic();
+  document.addEventListener('keydown',e=>{
+   const panel=$('presentationKeyboardDiagnosticPanel'),status=$('presentationKeyboardDiagnosticStatus');
+   if(!panel||!status)return;
+   const key=String(e.key||'(empty)');
+   status.textContent='Received key: '+key+' · code: '+String(e.code||'(empty)')+' · target: '+String(e.target?.tagName||'unknown')+' · slide: '+String((session.currentIndex||0)+1)+'/'+String(session.slides.length);
   },true);
   sync()
  }
