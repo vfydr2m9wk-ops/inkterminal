@@ -113,9 +113,10 @@
   /* ---------- Estatísticas ---------- */
   function lerStats(pc, tipo, ant, cb) {
     pc.getStats().then(function (r) {
-      var rtp = null, codec = "", par = null, tipos = {};
+      var rtp = null, remoto = null, codec = "", par = null, tipos = {};
       r.forEach(function (s) {
         if (s.type === tipo && s.kind === "video") rtp = s;
+        if (tipo === "outbound-rtp" && s.type === "remote-inbound-rtp" && s.kind === "video") remoto = s;
         if (s.type === "candidate-pair" && (s.nominated || s.selected) && s.state === "succeeded") par = s;
         tipos[s.id] = s;
       });
@@ -130,7 +131,7 @@
         rede = tp.indexOf("relay") >= 0 ? "relay" : tp.indexOf("srflx") >= 0 || tp.indexOf("prflx") >= 0 ? "internet (P2P)" : "local network";
         if (par.currentRoundTripTime) rede += " · " + Math.round(par.currentRoundTripTime * 1000) + " ms";
       }
-      cb({ rtp: rtp, codec: codec, taxa: taxa, rede: rede, b: bytes, t: agora, rtt: par && par.currentRoundTripTime ? par.currentRoundTripTime : 0 });
+      cb({ rtp: rtp, codec: codec, taxa: taxa, rede: rede, b: bytes, t: agora, rtt: par && par.currentRoundTripTime ? par.currentRoundTripTime : (remoto && remoto.roundTripTime ? remoto.roundTripTime : 0), perdaPct: remoto && remoto.fractionLost != null ? remoto.fractionLost * 100 : null });
     }).catch(function () { cb(null); });
   }
 
@@ -345,12 +346,8 @@
     function qual() { return QUALIDADES[$("qualidade").value] || QUALIDADES["1080p60"]; }
     function aplicarAdaptacao(s) {
       if (!adaptativo || !chamada || !chamada.peerConnection || !s || !s.rtp) return;
-      var agora = Date.now(), r = s.rtp, perda = Math.max(0, r.packetsLost || 0);
-      var anterior = adaptacaoAnterior, perdidosAntes = anterior ? Math.max(0, anterior.packetsLost || 0) : perda;
-      var recebidos = Math.max(0, r.packetsReceived || 0), recebidosAntes = anterior ? Math.max(0, anterior.packetsReceived || 0) : recebidos;
-      var totalJanela = (perda - perdidosAntes) + (recebidos - recebidosAntes);
-      var perdaPct = totalJanela > 0 ? 100 * (perda - perdidosAntes) / totalJanela : 0;
-      adaptacaoAnterior = { packetsLost: perda, packetsReceived: recebidos };
+      var agora = Date.now(), r = s.rtp;
+      var perdaPct = s.perdaPct != null ? s.perdaPct : 0;
       var limitacao = r.qualityLimitationReason || "none", rtt = s.rtt || 0, alvo = nivelAdaptativo;
       if (perdaPct >= 3 || rtt >= 0.35 || limitacao === "bandwidth") alvo = Math.min(3, nivelAdaptativo + 1);
       else if (perdaPct < 0.5 && rtt > 0 && rtt < 0.18 && limitacao === "none") alvo = Math.max(0, nivelAdaptativo - 1);
