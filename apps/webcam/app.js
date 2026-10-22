@@ -130,7 +130,7 @@
         rede = tp.indexOf("relay") >= 0 ? "relay" : tp.indexOf("srflx") >= 0 || tp.indexOf("prflx") >= 0 ? "internet (P2P)" : "local network";
         if (par.currentRoundTripTime) rede += " · " + Math.round(par.currentRoundTripTime * 1000) + " ms";
       }
-      cb({ rtp: rtp, codec: codec, taxa: taxa, rede: rede, b: bytes, t: agora });
+      cb({ rtp: rtp, codec: codec, taxa: taxa, rede: rede, b: bytes, t: agora, rtt: par && par.currentRoundTripTime ? par.currentRoundTripTime : 0 });
     }).catch(function () { cb(null); });
   }
 
@@ -224,11 +224,12 @@
       if (!chamada || !chamada.peerConnection) return;
       lerStats(chamada.peerConnection, "inbound-rtp", ant, function (s) {
         if (!s) return;
+        var anterior = ant;
         ant = s;
         var r = s.rtp, atraso = r.jitterBufferEmittedCount ? Math.round(r.jitterBufferDelay / r.jitterBufferEmittedCount * 1000) : 0;
         var perdidos = Math.max(0, r.packetsLost || 0), recebidos = Math.max(0, r.packetsReceived || 0);
-        var perdidosAntes = ant && ant.rtp ? Math.max(0, ant.rtp.packetsLost || 0) : perdidos;
-        var recebidosAntes = ant && ant.rtp ? Math.max(0, ant.rtp.packetsReceived || 0) : recebidos;
+        var perdidosAntes = anterior && anterior.rtp ? Math.max(0, anterior.rtp.packetsLost || 0) : perdidos;
+        var recebidosAntes = anterior && anterior.rtp ? Math.max(0, anterior.rtp.packetsReceived || 0) : recebidos;
         var perdaJanela = perdidos - perdidosAntes, recebidosJanela = recebidos - recebidosAntes;
         var perdaPct = perdaJanela + recebidosJanela > 0 ? (100 * perdaJanela / (perdaJanela + recebidosJanela)).toFixed(2) : "—";
         var jitter = r.jitter != null ? Math.round(r.jitter * 1000) : 0;
@@ -327,6 +328,13 @@
     if (cfg.codec) $("codec").value = cfg.codec;
     if (cfg.formato) $("formato").value = cfg.formato;
     var video = $("vhost"), stream = null, peer = null, chamada = null, ligado = false, tentativa = 0, ant = null, timer = 0, trava = null;
+    var adaptativo = $("qualidade").value === "adaptive", nivelAdaptativo = 0, ultimaMudancaAdaptativa = 0, adaptacaoAnterior = null;
+    $("qualidade").addEventListener("change", function () {
+      adaptativo = $("qualidade").value === "adaptive";
+      nivelAdaptativo = 0; adaptacaoAnterior = null;
+      salvar();
+      if (ligado && chamada && chamada.peerConnection) ajustarEnvio();
+    });
     var cameraSalva = cfg.camera || "environment";
     $("camera").value = cameraSalva;
 
@@ -335,6 +343,36 @@
       gravar(CHAVE_HOST, JSON.stringify({ codigo: limpo($("hcodigo").value), qualidade: $("qualidade").value, camera: $("camera").value, codec: $("codec").value, formato: $("formato").value }));
     }
     function qual() { return QUALIDADES[$("qualidade").value] || QUALIDADES["1080p60"]; }
+    function aplicarAdaptacao(s) {
+      if (!adaptativo || !chamada || !chamada.peerConnection || !s || !s.rtp) return;
+      var agora = Date.now(), r = s.rtp, perda = Math.max(0, r.packetsLost || 0);
+      var anterior = adaptacaoAnterior, perdidosAntes = anterior ? Math.max(0, anterior.packetsLost || 0) : perda;
+      var recebidos = Math.max(0, r.packetsReceived || 0), recebidosAntes = anterior ? Math.max(0, anterior.packetsReceived || 0) : recebidos;
+      var totalJanela = (perda - perdidosAntes) + (recebidos - recebidosAntes);
+      var perdaPct = totalJanela > 0 ? 100 * (perda - perdidosAntes) / totalJanela : 0;
+      adaptacaoAnterior = { packetsLost: perda, packetsReceived: recebidos };
+      var limitacao = r.qualityLimitationReason || "none", rtt = s.rtt || 0, alvo = nivelAdaptativo;
+      if (perdaPct >= 3 || rtt >= 0.35 || limitacao === "bandwidth") alvo = Math.min(3, nivelAdaptativo + 1);
+      else if (perdaPct < 0.5 && rtt > 0 && rtt < 0.18 && limitacao === "none") alvo = Math.max(0, nivelAdaptativo - 1);
+      if (alvo === nivelAdaptativo || agora - ultimaMudancaAdaptativa < 6000) return;
+      nivelAdaptativo = alvo; ultimaMudancaAdaptativa = agora;
+      var niveis = [
+        { bps: 15e6, fps: 60, escala: 1 },
+        { bps: 10e6, fps: 60, escala: 1.25 },
+        { bps: 6e6, fps: 30, escala: 1.5 },
+        { bps: 3e6, fps: 24, escala: 2 }
+      ], n = niveis[nivelAdaptativo];
+      chamada.peerConnection.getSenders().forEach(function (snd) {
+        if (!snd.track || snd.track.kind !== "video") return;
+        var p = snd.getParameters();
+        if (!p.encodings || !p.encodings.length) return;
+        p.encodings[0].maxBitrate = n.bps;
+        p.encodings[0].maxFramerate = n.fps;
+        p.encodings[0].scaleResolutionDownBy = n.escala;
+        snd.setParameters(p).catch(function () {});
+      });
+      estado(t("Adaptive quality") + ": " + ["1080p60","lower bandwidth","720p30","lower bandwidth (minimum)"][nivelAdaptativo]);
+    }
 
     function abrirCamera() {
       var Q = qual(), cam = $("camera").value;
@@ -375,9 +413,10 @@
         if (!snd.track || snd.track.kind !== "video") return;
         var p = snd.getParameters();
         if (!p.encodings || !p.encodings.length) p.encodings = [{}];
-        p.encodings[0].maxBitrate = Q.bps;
-        p.encodings[0].maxFramerate = Q.fps;
-        p.encodings[0].scaleResolutionDownBy = 1;
+        var nivel = adaptativo ? [{ bps: 15e6, fps: 60, escala: 1 }][0] : { bps: Q.bps, fps: Q.fps, escala: 1 };
+        p.encodings[0].maxBitrate = nivel.bps;
+        p.encodings[0].maxFramerate = nivel.fps;
+        p.encodings[0].scaleResolutionDownBy = nivel.escala;
         snd.setParameters(p).catch(function () {});
       });
     }
@@ -414,6 +453,7 @@
         if (st === "connected") {
           tentativa = 0;
           estado(t("Sending to the PC. Keep Safari open with the screen on."));
+          nivelAdaptativo = 0; adaptacaoAnterior = null; ultimaMudancaAdaptativa = Date.now();
           ajustarEnvio();
           clearInterval(timer);
           ant = null;
@@ -441,8 +481,10 @@
       if (!chamada || !chamada.peerConnection) return;
       lerStats(chamada.peerConnection, "outbound-rtp", ant, function (s) {
         if (!s) return;
+        var anterior = ant;
         ant = s;
         var r = s.rtp, cfgs = stream && stream.getVideoTracks()[0] ? stream.getVideoTracks()[0].getSettings() : {};
+        aplicarAdaptacao(s);
         var limitacao = r.qualityLimitationReason && r.qualityLimitationReason !== "none" ? r.qualityLimitationReason : "none";
         var fpsCaptura = Math.round(cfgs.frameRate || 0), fpsEnvio = Math.round(r.framesPerSecond || 0);
         $("hstats").textContent = t("Camera (captured)") + ": " + (cfgs.width || "?") + "×" + (cfgs.height || "?") + " · " + fpsCaptura + " fps\n" +
