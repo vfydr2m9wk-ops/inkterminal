@@ -251,6 +251,111 @@
       });
     }
 
+    /* ---------- Diagnóstico de vídeo/WebRTC para Guest ---------- */
+    function executarDiagnostico() {
+      var out = [];
+      function linha(k, v) { out.push(k + ": " + (v == null || v === "" ? "unavailable" : String(v))); }
+      function json(v) { try { return JSON.stringify(v); } catch (_) { return String(v); } }
+      linha("Timestamp", new Date().toISOString());
+      linha("Page URL", location.href);
+      linha("User agent", navigator.userAgent);
+      linha("Platform", navigator.platform);
+      linha("Secure context", window.isSecureContext);
+      linha("Visibility", document.visibilityState);
+      linha("MediaDevices API", !!navigator.mediaDevices);
+      linha("getUserMedia API", !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+      linha("Permissions API", !!navigator.permissions);
+      linha("Video element", "readyState=" + video.readyState + ", networkState=" + video.networkState +
+        ", paused=" + video.paused + ", ended=" + video.ended + ", muted=" + video.muted +
+        ", videoWidth=" + video.videoWidth + ", videoHeight=" + video.videoHeight +
+        ", currentTime=" + video.currentTime + ", error=" + (video.error ? video.error.code : "none"));
+      var tracks = video.srcObject && video.srcObject.getVideoTracks ? video.srcObject.getVideoTracks() : [];
+      linha("Remote stream attached", !!video.srcObject);
+      linha("Remote video tracks", tracks.length);
+      tracks.forEach(function (tr, i) {
+        linha("Track " + i, "kind=" + tr.kind + ", enabled=" + tr.enabled + ", muted=" + tr.muted +
+          ", readyState=" + tr.readyState + ", settings=" + json(tr.getSettings ? tr.getSettings() : {}));
+      });
+      var pc = chamada && chamada.peerConnection;
+      linha("Call exists", !!chamada);
+      linha("PeerConnection exists", !!pc);
+      if (pc) {
+        linha("Connection state", pc.connectionState);
+        linha("ICE connection state", pc.iceConnectionState);
+        linha("ICE gathering state", pc.iceGatheringState);
+        linha("Signaling state", pc.signalingState);
+        linha("Receivers", pc.getReceivers().length);
+      }
+      var tasks = [];
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        tasks.push(navigator.mediaDevices.enumerateDevices().then(function (devices) {
+          linha("Enumerated devices", devices.map(function (d) {
+            return d.kind + (d.label ? " (" + d.label + ")" : " (label hidden)") + (d.deviceId ? " [id available]" : "");
+          }).join("; "));
+        }).catch(function (e) { linha("Enumerated devices error", e.name + ": " + e.message); }));
+      }
+      if (navigator.permissions && navigator.permissions.query) {
+        tasks.push(navigator.permissions.query({ name: "camera" }).then(function (p) {
+          linha("Camera permission", p.state);
+        }).catch(function (e) { linha("Camera permission query", e.name + ": " + e.message); }));
+      }
+      if (pc && pc.getStats) {
+        tasks.push(pc.getStats().then(function (reports) {
+          var types = {};
+          reports.forEach(function (s) {
+            types[s.type] = (types[s.type] || 0) + 1;
+            if (s.type === "inbound-rtp" && (s.kind === "video" || s.mediaType === "video")) {
+              linha("Inbound video RTP " + s.id, json({
+                bytesReceived: s.bytesReceived, packetsReceived: s.packetsReceived, packetsLost: s.packetsLost,
+                framesReceived: s.framesReceived, framesDecoded: s.framesDecoded, framesDropped: s.framesDropped,
+                framesPerSecond: s.framesPerSecond, frameWidth: s.frameWidth, frameHeight: s.frameHeight,
+                keyFramesDecoded: s.keyFramesDecoded, decoderImplementation: s.decoderImplementation,
+                jitter: s.jitter, pliCount: s.pliCount, nackCount: s.nackCount, freezeCount: s.freezeCount
+              }));
+              if (s.codecId) {
+                var codec = reports.get(s.codecId);
+                if (codec) linha("Inbound codec " + s.id, json({ mimeType: codec.mimeType, sdpFmtpLine: codec.sdpFmtpLine }));
+              }
+            }
+            if (s.type === "candidate-pair" && (s.nominated || s.selected)) {
+              linha("Selected ICE candidate pair", json({
+                state: s.state, nominated: s.nominated, currentRoundTripTime: s.currentRoundTripTime,
+                availableIncomingBitrate: s.availableIncomingBitrate, availableOutgoingBitrate: s.availableOutgoingBitrate,
+                localCandidateId: s.localCandidateId, remoteCandidateId: s.remoteCandidateId
+              }));
+            }
+          });
+          linha("WebRTC stats report types", json(types));
+        }).catch(function (e) { linha("getStats error", e.name + ": " + e.message); }));
+      }
+      Promise.all(tasks).then(function () {
+        linha("Hint", !chamada ? "No active call: wait for the iPhone to connect." :
+          (!tracks.length ? "Call exists but no remote video track is attached." :
+          (!video.videoWidth || !video.videoHeight ? "Track exists but video has no decoded dimensions yet." :
+          "If the screen is still black, compare framesReceived and framesDecoded to identify whether packets arrive and decode.")));
+        $("relatoriodiagnostico").value = out.join("\n");
+      });
+      $("relatoriodiagnostico").value = out.join("\n") + "\nCollecting asynchronous device and WebRTC stats…";
+    }
+    $("bdiagnostico").onclick = function () {
+      $("paineldiagnostico").hidden = !$("paineldiagnostico").hidden;
+      if (!$("paineldiagnostico").hidden) executarDiagnostico();
+    };
+    $("executardiagnostico").onclick = executarDiagnostico;
+    $("fechardiagnostico").onclick = function () { $("paineldiagnostico").hidden = true; };
+    $("copiardiagnostico").onclick = function () {
+      var area = $("relatoriodiagnostico");
+      var texto = area.value;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(function () {
+          $("copiardiagnostico").textContent = "Copied";
+        }).catch(function () { area.focus(); area.select(); document.execCommand("copy"); });
+      } else {
+        area.focus(); area.select();
+        try { document.execCommand("copy"); } catch (_) {}
+      }
+    };
+
     $("bstats").onclick = function () { statsVisivel = !statsVisivel; $("gstats").hidden = !statsVisivel || !chamada; };
     $("btela").onclick = function () {
       var el = $("guest");
