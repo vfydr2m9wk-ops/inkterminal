@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>iPad + Zoom camera feasibility · InkTerminal</title>
+<title>Use iPhone as Zoom camera · InkTerminal</title>
 <script src="../../assets/tema.js?v=1"></script>
 <script src="../../assets/idioma.js?v=1"></script>
 <link rel="stylesheet" href="../../assets/barra.css?v=2">
@@ -17,99 +17,76 @@
   .muted{color:var(--muted);font-size:14px}
   .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:14px 0}
   .status{display:flex;gap:10px;align-items:flex-start}
-  .dot{width:10px;height:10px;border-radius:50%;background:#b7791f;flex:none;margin-top:7px}
-  .good .dot{background:#16803d}.bad .dot{background:#c43d3d}
+  .dot{width:10px;height:10px;border-radius:50%;background:#16803d;flex:none;margin-top:7px}
+  .warn .dot{background:#b7791f}
   .status strong{display:block;margin-bottom:3px}
   .status p{margin:0;font-size:14px;color:var(--muted)}
-  .steps{padding-left:22px}
   .link{display:inline-block;background:var(--wc);color:#fff;text-decoration:none;font-weight:700;border-radius:9px;padding:10px 14px;margin:5px 5px 5px 0}
   .secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+  .flow{display:grid;gap:8px}
+  .step{border:1px solid var(--border);border-radius:12px;padding:13px}
+  .step b{display:block;margin-bottom:5px}
   code{overflow-wrap:anywhere}
 </style>
 </head>
 <body class="ink-app" data-idioma>
 <header class="ink-bar">
   <a class="ink-home" href="./" data-icone="voltar">InkTerminal</a>
-  <span class="ink-title">iPad + Zoom</span>
+  <span class="ink-title">iPhone → Zoom</span>
   <span class="ink-spacer"></span>
   <button class="ink-btn" type="button" data-idioma-botao data-icone="idioma" title="Language" aria-label="Language"></button>
 </header>
 <main class="ink-main">
 <div class="wrap">
-  <p class="muted">INKTERMINAL WEBCAM · FEASIBILITY CHECK</p>
-  <h1>Can the iPhone become Zoom’s camera on the iPad?</h1>
-  <p>This page checks the browser features available on this device and explains the current technical boundary. It does not change your Zoom settings or request camera access.</p>
+  <p class="muted">INKTERMINAL WEBCAM · OPTION B</p>
+  <h1>Use the iPhone rear camera in Zoom</h1>
+  <p>The reliable route is to make the iPhone feed a camera device that the computer operating system exposes to Zoom. InkTerminal already contains a Windows virtual-camera app for this purpose.</p>
 
-  <div class="panel status bad">
+  <div class="panel status">
     <span class="dot" aria-hidden="true"></span>
-    <div><strong>Direct injection into the normal Zoom Web meeting is not available to a webpage.</strong>
-    <p>InkTerminal can receive the iPhone’s video in this Safari tab, but a separate website cannot register that stream as a system camera or pass it directly into Zoom’s camera selector. This is a browser/iPadOS boundary, not a missing JavaScript setting.</p></div>
+    <div><strong>Recommended: Windows + InkTerminal Webcam</strong>
+    <p>No OBS installation is required. The Windows app receives the iPhone stream and exposes it as a camera named “InkTerminal Webcam”.</p></div>
   </div>
 
-  <h2>Browser capability check</h2>
-  <p class="muted">These checks help us document this device’s media capabilities. Even when every item is supported, that does not create a virtual camera device for Zoom.</p>
-  <div id="checks" class="panel" aria-live="polite">
-    <p>Running checks…</p>
+  <div class="flow">
+    <div class="step"><b>1 · Download the Windows app</b>
+      <p>On a Windows 10/11 computer (64-bit), download the ZIP and extract the entire folder. Do not run the EXE from inside the ZIP.</p>
+      <a class="link" href="https://github.com/Inkterminal/Inkterminal.github.io/releases/download/webcam-windows/InkTerminal-Webcam-Windows.zip">Download InkTerminal Webcam (ZIP)</a>
+    </div>
+    <div class="step"><b>2 · Open the receiver</b>
+      <p>Run “InkTerminal Webcam.exe”. On first launch, approve the administrator prompt so Windows can register the virtual camera. Keep the app open during the meeting.</p>
+    </div>
+    <div class="step"><b>3 · Pair the iPhone</b>
+      <p>In the app’s embedded Webcam page, use the Guest/receiver view and note the six-character code or QR code. On the iPhone, open the InkTerminal Webcam page, choose Host, scan/type the code, select Back camera and start the stream. Keep Safari open and the screen awake.</p>
+      <a class="link secondary" href="./">Open InkTerminal Webcam</a>
+    </div>
+    <div class="step"><b>4 · Select the camera in Zoom</b>
+      <p>In the Zoom desktop app on Windows, open Settings → Video and select “InkTerminal Webcam”. Preview the image before joining the call. The receiver app must remain running.</p>
+      <a class="link secondary" href="https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060748" target="_blank" rel="noopener">Zoom camera requirements</a>
+    </div>
   </div>
 
-  <h2>What can work instead?</h2>
-  <div class="panel">
-    <strong>Option 1 — Keep the existing Zoom meeting on the iPad</strong>
-    <p>Use InkTerminal to receive and preview the iPhone feed, but select the iPad’s built-in camera in Zoom. The iPhone feed will not be sent to the other participants as the Zoom camera.</p>
-  </div>
-  <div class="panel">
-    <strong>Option 2 — Use the iPhone as a real webcam on a computer</strong>
-    <p>This is the supported path already built into InkTerminal: receive the stream on Windows and use the InkTerminal virtual camera or OBS Virtual Camera, then select that camera in Zoom. A desktop OS can expose a virtual camera to other apps.</p>
-    <a class="link" href="./">Open Webcam</a>
-  </div>
-  <div class="panel">
-    <strong>Option 3 — Build a separate Zoom-powered meeting interface</strong>
-    <p>Zoom’s Video SDK can power a custom meeting application, but this is not a drop-in camera for an ordinary Zoom meeting. It requires Zoom developer credentials and a secure token service; secrets must not be embedded in this static GitHub Pages site.</p>
-    <a class="link secondary" href="https://developers.zoom.us/docs/video-sdk/web/" target="_blank" rel="noopener">Zoom Video SDK docs</a>
+  <h2>Important: this does not make the iPad’s Zoom use the feed</h2>
+  <div class="panel status warn">
+    <span class="dot" aria-hidden="true"></span>
+    <div><strong>The computer is part of this solution.</strong>
+    <p>If Zoom remains open on the iPad in Safari, it will still use a camera device available to iPadOS. A webpage cannot register InkTerminal’s received stream as a system camera on the iPad. For the iPhone image to be sent as the camera in a normal Zoom meeting, run that meeting on the computer and select the virtual camera there.</p></div>
   </div>
 
-  <h2>Why we are not adding a fake “Connect to Zoom” button</h2>
-  <p>A button cannot bridge isolated browser tabs or create a system-level camera device. Adding one would appear to work in a demo while leaving Zoom participants without the iPhone video. The next useful experiment is to test supported system-level routes, not to modify the existing WebRTC stream in a way that cannot reach Zoom.</p>
-  <p class="muted">No camera permission was requested. This page only reads browser feature flags and user-agent information locally.</p>
+  <h2>Quality settings</h2>
+  <ul>
+    <li>Start with 1080p 30 fps for stability; try 1080p 60 fps if the computer and network handle it well.</li>
+    <li>4K is not needed for a normal Zoom call and can increase processing and network load. The Zoom desktop app may limit the outgoing resolution based on the account, meeting, and device.</li>
+    <li>Use the same reliable Wi-Fi network for both devices when possible. The video uses WebRTC; the public PeerJS service is used for pairing/signaling.</li>
+  </ul>
+
+  <h2>Alternative: OBS Virtual Camera</h2>
+  <p>If the Windows app fails to create or expose its camera, use OBS Studio: add the InkTerminal Guest page as a Browser source, then start OBS Virtual Camera and select “OBS Virtual Camera” in Zoom. This alternative is documented on the main Webcam page.</p>
+  <a class="link secondary" href="https://obsproject.com/download" target="_blank" rel="noopener">Download OBS Studio</a>
+  <a class="link secondary" href="./">Full Webcam instructions</a>
+
+  <p class="muted">This page documents the supported computer workflow. It does not claim that a webpage can inject video into another browser tab or create a virtual camera on iPadOS.</p>
 </div>
 </main>
-<script>
-(function () {
-  "use strict";
-  var checks = document.getElementById("checks");
-  var ua = navigator.userAgent || "";
-  var platform = navigator.platform || "";
-  var touchMac = platform === "MacIntel" && navigator.maxTouchPoints > 1;
-  var isAppleMobile = /iPad|iPhone|iPod/.test(ua) || touchMac;
-  var rows = [
-    ["Secure context (required for camera APIs)", window.isSecureContext === true, String(window.isSecureContext)],
-    ["WebRTC peer connections", typeof window.RTCPeerConnection === "function", typeof window.RTCPeerConnection],
-    ["Camera capture API", !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? "available (permission not requested)" : "not available"],
-    ["Canvas captureStream", !!(HTMLCanvasElement.prototype && HTMLCanvasElement.prototype.captureStream), HTMLCanvasElement.prototype && HTMLCanvasElement.prototype.captureStream ? "available" : "not available"],
-    ["MediaStreamTrackGenerator", typeof window.MediaStreamTrackGenerator === "function", typeof window.MediaStreamTrackGenerator],
-    ["Picture-in-Picture API", document.pictureInPictureEnabled === true, String(document.pictureInPictureEnabled === true)],
-    ["Apple mobile / iPadOS-like browser", isAppleMobile, isAppleMobile ? "likely Apple mobile device" : "not detected from this browser"]
-  ];
-  checks.textContent = "";
-  rows.forEach(function (item) {
-    var row = document.createElement("div");
-    row.className = "status " + (item[1] ? "good" : "bad");
-    row.style.margin = "10px 0";
-    var dot = document.createElement("span");
-    dot.className = "dot";
-    dot.setAttribute("aria-hidden", "true");
-    var body = document.createElement("div");
-    var title = document.createElement("strong");
-    title.textContent = item[0];
-    var detail = document.createElement("p");
-    detail.textContent = item[2];
-    body.appendChild(title);
-    body.appendChild(detail);
-    row.appendChild(dot);
-    row.appendChild(body);
-    checks.appendChild(row);
-  });
-})();
-</script>
 </body>
 </html>
