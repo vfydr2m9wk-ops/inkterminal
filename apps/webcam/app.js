@@ -226,9 +226,17 @@
         if (!s) return;
         ant = s;
         var r = s.rtp, atraso = r.jitterBufferEmittedCount ? Math.round(r.jitterBufferDelay / r.jitterBufferEmittedCount * 1000) : 0;
+        var perdidos = Math.max(0, r.packetsLost || 0), recebidos = Math.max(0, r.packetsReceived || 0);
+        var perdidosAntes = ant && ant.rtp ? Math.max(0, ant.rtp.packetsLost || 0) : perdidos;
+        var recebidosAntes = ant && ant.rtp ? Math.max(0, ant.rtp.packetsReceived || 0) : recebidos;
+        var perdaJanela = perdidos - perdidosAntes, recebidosJanela = recebidos - recebidosAntes;
+        var perdaPct = perdaJanela + recebidosJanela > 0 ? (100 * perdaJanela / (perdaJanela + recebidosJanela)).toFixed(2) : "—";
+        var jitter = r.jitter != null ? Math.round(r.jitter * 1000) : 0;
+        var descartados = r.framesDropped != null ? r.framesDropped : "—";
         $("gstats").textContent = (r.frameWidth || "?") + "×" + (r.frameHeight || "?") + " · " + Math.round(r.framesPerSecond || 0) + " fps\n" +
           s.codec + (r.decoderImplementation ? " (" + r.decoderImplementation + ")" : "") + " · " + mbps(s.taxa) + "\n" +
-          t("Buffer") + ": " + atraso + " ms · " + t("lost") + ": " + (r.packetsLost || 0) + "\n" + s.rede;
+          t("Buffer") + ": " + atraso + " ms · jitter: " + jitter + " ms\n" +
+          t("lost") + ": " + perdidos + " (+" + perdaJanela + ", " + perdaPct + "%) · dropped: " + descartados + "\n" + s.rede;
         $("gstats").hidden = !statsVisivel;
       });
     }
@@ -435,10 +443,13 @@
         if (!s) return;
         ant = s;
         var r = s.rtp, cfgs = stream && stream.getVideoTracks()[0] ? stream.getVideoTracks()[0].getSettings() : {};
-        $("hstats").textContent = t("Camera") + ": " + (cfgs.width || "?") + "×" + (cfgs.height || "?") + " · " + Math.round(cfgs.frameRate || 0) + " fps\n" +
-          t("Sent") + ": " + (r.frameWidth || "?") + "×" + (r.frameHeight || "?") + " · " + Math.round(r.framesPerSecond || 0) + " fps\n" +
+        var limitacao = r.qualityLimitationReason && r.qualityLimitationReason !== "none" ? r.qualityLimitationReason : "none";
+        var fpsCaptura = Math.round(cfgs.frameRate || 0), fpsEnvio = Math.round(r.framesPerSecond || 0);
+        $("hstats").textContent = t("Camera (captured)") + ": " + (cfgs.width || "?") + "×" + (cfgs.height || "?") + " · " + fpsCaptura + " fps\n" +
+          t("Sent (encoded)") + ": " + (r.frameWidth || "?") + "×" + (r.frameHeight || "?") + " · " + fpsEnvio + " fps\n" +
           s.codec + (r.encoderImplementation ? " (" + r.encoderImplementation + ")" : "") + " · " + mbps(s.taxa) +
-          (r.qualityLimitationReason && r.qualityLimitationReason !== "none" ? "\n" + t("Limited by") + ": " + r.qualityLimitationReason : "") + "\n" + s.rede;
+          "\n" + t("Encoder limitation") + ": " + limitacao +
+          (r.framesEncoded != null ? " · encoded frames: " + r.framesEncoded : "") + "\n" + s.rede;
         $("hstats").hidden = false;
       });
     }
