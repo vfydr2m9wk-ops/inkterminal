@@ -324,7 +324,7 @@
     var cfg = {};
     try { cfg = JSON.parse(ler(CHAVE_HOST) || "{}") || {}; } catch (_) {}
     $("hcodigo").value = limpo(codigo) || cfg.codigo || "";
-    if (cfg.qualidade && QUALIDADES[cfg.qualidade]) $("qualidade").value = cfg.qualidade;
+    if (cfg.qualidade && (QUALIDADES[cfg.qualidade] || cfg.qualidade === "adaptive")) $("qualidade").value = cfg.qualidade;
     if (cfg.codec) $("codec").value = cfg.codec;
     if (cfg.formato) $("formato").value = cfg.formato;
     var video = $("vhost"), stream = null, peer = null, chamada = null, ligado = false, tentativa = 0, ant = null, timer = 0, trava = null;
