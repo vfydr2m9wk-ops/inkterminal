@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>iPad + Zoom camera feasibility · InkTerminal</title>
+<script src="../../assets/tema.js?v=1"></script>
+<script src="../../assets/idioma.js?v=1"></script>
+<link rel="stylesheet" href="../../assets/barra.css?v=2">
+<style>
+  :root{--wc:#0e8a7e}
+  .ink-main{overflow:auto}
+  .wrap{max-width:820px;margin:0 auto;padding:24px 16px 44px;box-sizing:border-box}
+  h1{font-size:clamp(25px,5vw,34px);margin:8px 0}
+  h2{font-size:19px;margin:26px 0 8px}
+  p,li{line-height:1.6}
+  .muted{color:var(--muted);font-size:14px}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:14px 0}
+  .status{display:flex;gap:10px;align-items:flex-start}
+  .dot{width:10px;height:10px;border-radius:50%;background:#b7791f;flex:none;margin-top:7px}
+  .good .dot{background:#16803d}.bad .dot{background:#c43d3d}
+  .status strong{display:block;margin-bottom:3px}
+  .status p{margin:0;font-size:14px;color:var(--muted)}
+  .steps{padding-left:22px}
+  .link{display:inline-block;background:var(--wc);color:#fff;text-decoration:none;font-weight:700;border-radius:9px;padding:10px 14px;margin:5px 5px 5px 0}
+  .secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+  code{overflow-wrap:anywhere}
+</style>
+</head>
+<body class="ink-app" data-idioma>
+<header class="ink-bar">
+  <a class="ink-home" href="./" data-icone="voltar">InkTerminal</a>
+  <span class="ink-title">iPad + Zoom</span>
+  <span class="ink-spacer"></span>
+  <button class="ink-btn" type="button" data-idioma-botao data-icone="idioma" title="Language" aria-label="Language"></button>
+</header>
+<main class="ink-main">
+<div class="wrap">
+  <p class="muted">INKTERMINAL WEBCAM · FEASIBILITY CHECK</p>
+  <h1>Can the iPhone become Zoom’s camera on the iPad?</h1>
+  <p>This page checks the browser features available on this device and explains the current technical boundary. It does not change your Zoom settings or request camera access.</p>
+
+  <div class="panel status bad">
+    <span class="dot" aria-hidden="true"></span>
+    <div><strong>Direct injection into the normal Zoom Web meeting is not available to a webpage.</strong>
+    <p>InkTerminal can receive the iPhone’s video in this Safari tab, but a separate website cannot register that stream as a system camera or pass it directly into Zoom’s camera selector. This is a browser/iPadOS boundary, not a missing JavaScript setting.</p></div>
+  </div>
+
+  <h2>Browser capability check</h2>
+  <p class="muted">These checks help us document this device’s media capabilities. Even when every item is supported, that does not create a virtual camera device for Zoom.</p>
+  <div id="checks" class="panel" aria-live="polite">
+    <p>Running checks…</p>
+  </div>
+
+  <h2>What can work instead?</h2>
+  <div class="panel">
+    <strong>Option 1 — Keep the existing Zoom meeting on the iPad</strong>
+    <p>Use InkTerminal to receive and preview the iPhone feed, but select the iPad’s built-in camera in Zoom. The iPhone feed will not be sent to the other participants as the Zoom camera.</p>
+  </div>
+  <div class="panel">
+    <strong>Option 2 — Use the iPhone as a real webcam on a computer</strong>
+    <p>This is the supported path already built into InkTerminal: receive the stream on Windows and use the InkTerminal virtual camera or OBS Virtual Camera, then select that camera in Zoom. A desktop OS can expose a virtual camera to other apps.</p>
+    <a class="link" href="./">Open Webcam</a>
+  </div>
+  <div class="panel">
+    <strong>Option 3 — Build a separate Zoom-powered meeting interface</strong>
+    <p>Zoom’s Video SDK can power a custom meeting application, but this is not a drop-in camera for an ordinary Zoom meeting. It requires Zoom developer credentials and a secure token service; secrets must not be embedded in this static GitHub Pages site.</p>
+    <a class="link secondary" href="https://developers.zoom.us/docs/video-sdk/web/" target="_blank" rel="noopener">Zoom Video SDK docs</a>
+  </div>
+
+  <h2>Why we are not adding a fake “Connect to Zoom” button</h2>
+  <p>A button cannot bridge isolated browser tabs or create a system-level camera device. Adding one would appear to work in a demo while leaving Zoom participants without the iPhone video. The next useful experiment is to test supported system-level routes, not to modify the existing WebRTC stream in a way that cannot reach Zoom.</p>
+  <p class="muted">No camera permission was requested. This page only reads browser feature flags and user-agent information locally.</p>
+</div>
+</main>
+<script>
+(function () {
+  "use strict";
+  var checks = document.getElementById("checks");
+  var ua = navigator.userAgent || "";
+  var platform = navigator.platform || "";
+  var touchMac = platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  var isAppleMobile = /iPad|iPhone|iPod/.test(ua) || touchMac;
+  var rows = [
+    ["Secure context (required for camera APIs)", window.isSecureContext === true, String(window.isSecureContext)],
+    ["WebRTC peer connections", typeof window.RTCPeerConnection === "function", typeof window.RTCPeerConnection],
+    ["Camera capture API", !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? "available (permission not requested)" : "not available"],
+    ["Canvas captureStream", !!(HTMLCanvasElement.prototype && HTMLCanvasElement.prototype.captureStream), HTMLCanvasElement.prototype && HTMLCanvasElement.prototype.captureStream ? "available" : "not available"],
+    ["MediaStreamTrackGenerator", typeof window.MediaStreamTrackGenerator === "function", typeof window.MediaStreamTrackGenerator],
+    ["Picture-in-Picture API", document.pictureInPictureEnabled === true, String(document.pictureInPictureEnabled === true)],
+    ["Apple mobile / iPadOS-like browser", isAppleMobile, isAppleMobile ? "likely Apple mobile device" : "not detected from this browser"]
+  ];
+  checks.textContent = "";
+  rows.forEach(function (item) {
+    var row = document.createElement("div");
+    row.className = "status " + (item[1] ? "good" : "bad");
+    row.style.margin = "10px 0";
+    var dot = document.createElement("span");
+    dot.className = "dot";
+    dot.setAttribute("aria-hidden", "true");
+    var body = document.createElement("div");
+    var title = document.createElement("strong");
+    title.textContent = item[0];
+    var detail = document.createElement("p");
+    detail.textContent = item[2];
+    body.appendChild(title);
+    body.appendChild(detail);
+    row.appendChild(dot);
+    row.appendChild(body);
+    checks.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>
