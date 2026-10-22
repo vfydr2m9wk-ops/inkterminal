@@ -161,6 +161,7 @@
 
   <section id="presentOverlay" hidden tabindex="0" aria-label="Presentation mode" style="position:fixed;inset:0;z-index:300;background:#090909;display:grid;place-items:center;overflow:hidden"><button data-present-exit type="button" aria-label="Exit presentation" style="position:fixed;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:2;min-width:44px;min-height:44px;border:0;border-radius:12px;background:rgba(30,30,30,.72);color:white">×</button><div id="presentHost" style="position:relative;width:min(100vw,177.78vh);height:min(100vh,56.25vw);max-width:100vw;max-height:100vh;background:white"></div><div id="presentCounter" style="position:fixed;bottom:max(10px,env(safe-area-inset-bottom));right:max(12px,env(safe-area-inset-right));color:white;background:rgba(0,0,0,.45);padding:5px 8px;border-radius:8px;font-size:12px">1 / 1</div></section>
 </div>
+<button id="presentationKeyboardDiagnostic" type="button" aria-label="Test Bluetooth keyboard navigation" style="position:fixed;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:9999;padding:9px 12px;border:1px solid #888;border-radius:10px;background:#20242b;color:#fff;font:600 12px system-ui;box-shadow:0 2px 8px #0003">⌨ Keyboard test</button>
 <script src="vendor/jszip.min.js"></script>
 <script src="runtime/frame/frame-menu.js"></script>
 <script src="runtime/platform/content-viewport-adapter.js"></script>
@@ -184,7 +185,7 @@
 <script src="ui/zoom-controls.js"></script>
 <script src="ui/editing-controller.js"></script>
 <script src="presentation/slideshow-controller.js"></script>
-<script src="ui/command-controller.js?v=20261022-3"></script>
+<script src="ui/command-controller.js?v=20261022-4"></script>
 <script src="help/help.js"></script>
 <script src="app.js"></script>
 <script>
