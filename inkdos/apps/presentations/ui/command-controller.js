@@ -117,8 +117,7 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
   global.addEventListener('keydown',handleKeyboardNavigation,true);
   document.addEventListener('keydown',handleKeyboardNavigation,true);
   function installKeyboardDiagnostic(){
-   if($('presentationKeyboardDiagnostic'))return;
-   const button=document.createElement('button');
+   const button=$('presentationKeyboardDiagnostic')||document.createElement('button');
    button.id='presentationKeyboardDiagnostic';button.type='button';button.textContent='⌨ Keyboard test';
    button.setAttribute('aria-label','Test Bluetooth keyboard navigation');
    button.style.cssText='position:fixed;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:9999;padding:9px 12px;border:1px solid #888;border-radius:10px;background:#20242b;color:#fff;font:600 12px system-ui;box-shadow:0 2px 8px #0003';
@@ -133,7 +132,7 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
     const close=document.createElement('button');close.type='button';close.textContent='Close';close.style.cssText='padding:6px 10px;border:1px solid #aaa;border-radius:7px;background:#f5f5f5;color:#111';close.onclick=()=>panel.remove();panel.appendChild(close);
     document.body.appendChild(panel);
    });
-   document.body.appendChild(button);
+   if(!button.isConnected)document.body.appendChild(button);
   }
   installKeyboardDiagnostic();
 
