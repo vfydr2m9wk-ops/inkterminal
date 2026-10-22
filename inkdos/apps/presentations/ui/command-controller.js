@@ -85,7 +85,26 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
   document.querySelectorAll('[data-appearance-choice]').forEach(b=>{b.dataset.command='appearance.set';b.onclick=()=>execute('appearance.set',b.dataset.appearanceChoice)});
   const title=$('titleText');if(title)title.addEventListener('change',e=>{if(!isEnabled('file.rename')){chrome.title();return}execute('file.rename',e.target.value)});
   bindClick('presentBtn','presentation.present.current');const presentStart=bindClick('presentStartMenuBtn','presentation.present.start');if(presentStart)presentStart.onclick=()=>{drawer.close({restoreFocus:false});execute('presentation.present.start')};
-  document.addEventListener('keydown',async e=>{const mod=e.metaKey||e.ctrlKey;if(!mod)return;const k=e.key.toLowerCase();if(k==='o'){e.preventDefault();await execute('file.open')}else if(k==='n'){e.preventDefault();await execute('file.new')}else if(k==='s'){e.preventDefault();await execute('file.save')}else if(k==='z'&&!e.shiftKey&&!e.target.isContentEditable){e.preventDefault();execute('history.undo')}else if((k==='y'||(k==='z'&&e.shiftKey))&&!e.target.isContentEditable){e.preventDefault();execute('history.redo')}});
+  document.addEventListener('keydown',async e=>{
+   const target=e.target;
+   const typing=!!target?.closest?.('input,textarea,select,[contenteditable="true"],[contenteditable=""],[role="textbox"]');
+   const mod=e.metaKey||e.ctrlKey;
+   if(!mod&&!e.altKey&&!e.shiftKey&&!typing&&session.active&&!isBusy()&&!unsavedDialog){
+    const overlay=$('presentOverlay');
+    const start=$('startState');
+    if((!overlay||overlay.hidden)&&(!start||start.dataset.active!=='true')){
+     if(e.key==='ArrowRight'&&isEnabled('navigation.next')){e.preventDefault();e.stopPropagation();execute('navigation.next');return}
+     if(e.key==='ArrowLeft'&&isEnabled('navigation.previous')){e.preventDefault();e.stopPropagation();execute('navigation.previous');return}
+    }
+   }
+   if(!mod)return;
+   const k=e.key.toLowerCase();
+   if(k==='o'){e.preventDefault();await execute('file.open')}
+   else if(k==='n'){e.preventDefault();await execute('file.new')}
+   else if(k==='s'){e.preventDefault();await execute('file.save')}
+   else if(k==='z'&&!e.shiftKey&&!target?.isContentEditable){e.preventDefault();execute('history.undo')}
+   else if((k==='y'||(k==='z'&&e.shiftKey))&&!target?.isContentEditable){e.preventDefault();execute('history.redo')}
+  });
   sync()
  }
  installCommands();
