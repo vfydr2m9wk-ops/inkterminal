@@ -106,6 +106,13 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
    else if(k==='z'&&!e.shiftKey&&!target?.isContentEditable){e.preventDefault();execute('history.undo')}
    else if((k==='y'||(k==='z'&&e.shiftKey))&&!target?.isContentEditable){e.preventDefault();execute('history.redo')}
   };
+  // Diagnostic listener is registered first so it can report keys even when navigation consumes them.
+  global.addEventListener('keydown',e=>{
+   const panel=$('presentationKeyboardDiagnosticPanel'),status=$('presentationKeyboardDiagnosticStatus');
+   if(!panel||!status)return;
+   const key=String(e.key||'(empty)');
+   status.textContent='Received key: '+key+' · code: '+String(e.code||'(empty)')+' · target: '+String(e.target?.tagName||'unknown')+' · slide before action: '+String((session.currentIndex||0)+1)+'/'+String(session.slides.length);
+  },true);
   // Capture at both levels: some iPad embedded browsers route hardware-key events differently.
   global.addEventListener('keydown',handleKeyboardNavigation,true);
   document.addEventListener('keydown',handleKeyboardNavigation,true);
@@ -129,12 +136,7 @@ function create({session,history,selection,chrome,fileOpen,save,editor,panel,sli
    document.body.appendChild(button);
   }
   installKeyboardDiagnostic();
-  document.addEventListener('keydown',e=>{
-   const panel=$('presentationKeyboardDiagnosticPanel'),status=$('presentationKeyboardDiagnosticStatus');
-   if(!panel||!status)return;
-   const key=String(e.key||'(empty)');
-   status.textContent='Received key: '+key+' · code: '+String(e.code||'(empty)')+' · target: '+String(e.target?.tagName||'unknown')+' · slide: '+String((session.currentIndex||0)+1)+'/'+String(session.slides.length);
-  },true);
+
   sync()
  }
  installCommands();
