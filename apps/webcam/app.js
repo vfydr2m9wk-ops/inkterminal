@@ -66,9 +66,17 @@
       var f = /^a=fmtp:(\d+) (.*)$/.exec(linhas[i]);
       if (f) fmtp[f[1]] = f[2];
     }
+    var aliasesCodec = {
+      H264: ["H264", "AVC"],
+      H265: ["H265", "HEVC"],
+      VP9: ["VP9"],
+      VP8: ["VP8"],
+      AV1: ["AV1", "AV1X"]
+    };
+    var nomesAceitos = aliasesCodec[codec] || [codec];
     for (i = ini; i < fim; i++) {
       var m = /^a=rtpmap:(\d+) ([\w-]+)\//.exec(linhas[i]);
-      if (m && codec && m[2].toUpperCase() === codec) escolhidos.push(m[1]);
+      if (m && codec && nomesAceitos.indexOf(m[2].toUpperCase()) >= 0) escolhidos.push(m[1]);
     }
     if (codec === "H264") {
       // primeiro o perfil High com packetization-mode=1, que dá mais qualidade por bit
