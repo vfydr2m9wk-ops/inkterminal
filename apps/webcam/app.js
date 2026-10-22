@@ -347,7 +347,16 @@
     var cameraSalva = cfg.camera || "environment";
     $("camera").value = cameraSalva;
 
-    function estado(s) { $("hestado").textContent = s; }
+    function estado(s) {
+      $("hestado").textContent = s;
+      var selo = $("htransmissao");
+      if (selo) {
+        var transmitindo = !!(ligado && stream && chamada && chamada.peerConnection && chamada.peerConnection.connectionState === "connected");
+        selo.textContent = transmitindo ? "TRANSMITTING" : "LOCAL PREVIEW · WAITING FOR GUEST";
+        selo.classList.toggle("ativo", transmitindo);
+        selo.hidden = !stream;
+      }
+    }
     function salvar() {
       gravar(CHAVE_HOST, JSON.stringify({ codigo: limpo($("hcodigo").value), qualidade: $("qualidade").value, camera: $("camera").value, codec: $("codec").value, formato: $("formato").value }));
     }
@@ -457,7 +466,7 @@
         var st = pc.connectionState;
         if (st === "connected") {
           tentativa = 0;
-          estado(t("Sending to the PC. Keep Safari open with the screen on."));
+          estado(t("Transmitting to the Guest. Keep Safari open with the screen on."));
           nivelAdaptativo = 0; adaptacaoAnterior = null; ultimaMudancaAdaptativa = Date.now();
           ajustarEnvio();
           clearInterval(timer);
