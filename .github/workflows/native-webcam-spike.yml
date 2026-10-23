@@ -14,7 +14,7 @@ on:
       - '.github/workflows/native-webcam-spike.yml'
 
 jobs:
-  swift-package-build:
+  build-and-package:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,30 +24,54 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Build package on macOS (CI smoke test)
+      - name: Build Swift package
         working-directory: native/webcam-ios
         run: swift build
 
-      - name: Build package for iOS Simulator
-        working-directory: native/webcam-ios
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: native/webcam-ios/App
+        run: xcodegen generate
+
+      - name: Build iOS Simulator app
+        working-directory: native/webcam-ios/App
         run: |
           xcodebuild \
-            -scheme NativeWebcamCapture \
+            -project InkTerminalWebcamTest.xcodeproj \
+            -scheme InkTerminalWebcamTest \
+            -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/inkterminal-ios-simulator-build" \
+            -derivedDataPath "$RUNNER_TEMP/inkterminal-simulator-build" \
+            CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Package source for manual testing
+      - name: Build unsigned iPhone device app
+        working-directory: native/webcam-ios/App
         run: |
-          mkdir -p "$RUNNER_TEMP/inkterminal-webcam-test"
-          cp -R native/webcam-ios "$RUNNER_TEMP/inkterminal-webcam-test/"
-          cd "$RUNNER_TEMP"
-          zip -r inkterminal-native-webcam-source.zip inkterminal-webcam-test
+          xcodebuild \
+            -project InkTerminalWebcamTest.xcodeproj \
+            -scheme InkTerminalWebcamTest \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/inkterminal-device-build" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
-      - name: Upload test source artifact
+      - name: Package build outputs and source
+        run: |
+          mkdir -p "$RUNNER_TEMP/inkterminal-webcam-artifacts"
+          cp -R "$RUNNER_TEMP/inkterminal-simulator-build/Build/Products/Debug-iphonesimulator/InkTerminalWebcamTest.app" "$RUNNER_TEMP/inkterminal-webcam-artifacts/"
+          cp -R "$RUNNER_TEMP/inkterminal-device-build/Build/Products/Debug-iphoneos/InkTerminalWebcamTest.app" "$RUNNER_TEMP/inkterminal-webcam-artifacts/"
+          cp -R native/webcam-ios "$RUNNER_TEMP/inkterminal-webcam-artifacts/source"
+          cd "$RUNNER_TEMP"
+          zip -r inkterminal-native-webcam-test.zip inkterminal-webcam-artifacts
+
+      - name: Upload test artifact
         uses: actions/upload-artifact@v4
         with:
-          name: inkterminal-native-webcam-test-source
-          path: ${{ runner.temp }}/inkterminal-native-webcam-source.zip
+          name: inkterminal-native-webcam-test
+          path: ${{ runner.temp }}/inkterminal-native-webcam-test.zip
           if-no-files-found: error
           retention-days: 14
