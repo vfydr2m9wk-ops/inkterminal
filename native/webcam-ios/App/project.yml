@@ -1,0 +1,22 @@
+name: InkTerminalWebcamTest
+options:
+  bundleIdPrefix: io.inkterminal
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  InkTerminalWebcamTest:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Native4K60Capture.swift
+    info:
+      path: App/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.inkterminal.webcamtest
+        PRODUCT_NAME: InkTerminalWebcamTest
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGNING_ALLOWED: NO
