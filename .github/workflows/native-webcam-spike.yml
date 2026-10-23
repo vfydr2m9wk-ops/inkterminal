@@ -39,11 +39,11 @@ jobs:
         working-directory: native/webcam-ios/App
         run: |
           xcodebuild \
-            -project InkTerminalWebcamTest.xcodeproj \
-            -scheme InkTerminalWebcamTest \
+            -project InkDOSHubWebcamTest.xcodeproj \
+            -scheme InkDOSHubWebcamTest \
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/inkterminal-simulator-build" \
+            -derivedDataPath "$RUNNER_TEMP/inkdoshub-simulator-build" \
             CODE_SIGNING_ALLOWED=NO \
             build
 
@@ -51,27 +51,27 @@ jobs:
         working-directory: native/webcam-ios/App
         run: |
           xcodebuild \
-            -project InkTerminalWebcamTest.xcodeproj \
-            -scheme InkTerminalWebcamTest \
+            -project InkDOSHubWebcamTest.xcodeproj \
+            -scheme InkDOSHubWebcamTest \
             -configuration Debug \
             -destination 'generic/platform=iOS' \
-            -derivedDataPath "$RUNNER_TEMP/inkterminal-device-build" \
+            -derivedDataPath "$RUNNER_TEMP/inkdoshub-device-build" \
             CODE_SIGNING_ALLOWED=NO \
             build
 
       - name: Package build outputs and source
         run: |
-          mkdir -p "$RUNNER_TEMP/inkterminal-webcam-artifacts"
-          cp -R "$RUNNER_TEMP/inkterminal-simulator-build/Build/Products/Debug-iphonesimulator/InkTerminalWebcamTest.app" "$RUNNER_TEMP/inkterminal-webcam-artifacts/"
-          cp -R "$RUNNER_TEMP/inkterminal-device-build/Build/Products/Debug-iphoneos/InkTerminalWebcamTest.app" "$RUNNER_TEMP/inkterminal-webcam-artifacts/"
-          cp -R native/webcam-ios "$RUNNER_TEMP/inkterminal-webcam-artifacts/source"
+          mkdir -p "$RUNNER_TEMP/inkdoshub-webcam-artifacts"
+          cp -R "$RUNNER_TEMP/inkdoshub-simulator-build/Build/Products/Debug-iphonesimulator/InkDOSHubWebcamTest.app" "$RUNNER_TEMP/inkdoshub-webcam-artifacts/"
+          cp -R "$RUNNER_TEMP/inkdoshub-device-build/Build/Products/Debug-iphoneos/InkDOSHubWebcamTest.app" "$RUNNER_TEMP/inkdoshub-webcam-artifacts/"
+          cp -R native/webcam-ios "$RUNNER_TEMP/inkdoshub-webcam-artifacts/source"
           cd "$RUNNER_TEMP"
-          zip -r inkterminal-native-webcam-test.zip inkterminal-webcam-artifacts
+          zip -r inkdoshub-native-webcam-test.zip inkdoshub-webcam-artifacts
 
       - name: Upload test artifact
         uses: actions/upload-artifact@v4
         with:
-          name: inkterminal-native-webcam-test
-          path: ${{ runner.temp }}/inkterminal-native-webcam-test.zip
+          name: inkdoshub-native-webcam-test
+          path: ${{ runner.temp }}/inkdoshub-native-webcam-test.zip
           if-no-files-found: error
           retention-days: 14

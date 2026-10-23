@@ -1,10 +1,10 @@
-name: InkTerminalWebcamTest
+name: InkDOSHubWebcamTest
 options:
-  bundleIdPrefix: io.inkterminal
+  bundleIdPrefix: io.inkdoshub
   deploymentTarget:
     iOS: "16.0"
 targets:
-  InkTerminalWebcamTest:
+  InkDOSHubWebcamTest:
     type: application
     platform: iOS
     sources:
@@ -17,8 +17,8 @@ targets:
       path: Info.plist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: io.inkterminal.webcamtest
-        PRODUCT_NAME: InkTerminalWebcamTest
+        PRODUCT_BUNDLE_IDENTIFIER: io.inkdoshub.webcamtest
+        PRODUCT_NAME: InkDOSHubWebcamTest
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO

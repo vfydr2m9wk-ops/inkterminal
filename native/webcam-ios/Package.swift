@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "InkTerminalNativeWebcam",
+    name: "InkDOSHubNativeWebcam",
     platforms: [.iOS(.v16), .macOS(.v13)],
     products: [
         .library(name: "NativeWebcamCapture", targets: ["NativeWebcamCapture"])

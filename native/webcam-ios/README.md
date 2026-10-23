@@ -17,7 +17,7 @@ Prove whether the target iPhone can expose 3840×2160 at 60 fps from AVFoundatio
 ## Not yet implemented
 
 - App target, signing, UI, and packaging.
-- Native WebRTC session and pairing/signaling compatible with InkTerminal's current PeerJS flow.
+- Native WebRTC session and pairing/signaling compatible with InkDOS Hub's current PeerJS flow.
 - Windows native WebRTC receiver and Media Foundation Virtual Camera.
 - End-to-end 4K60 test on a physical iPhone + Windows consumer app.
 

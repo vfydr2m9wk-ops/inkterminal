@@ -1,8 +1,8 @@
-/* Webcam do InkTerminal (versão de teste).
+/* Webcam do InkDOS Hub (versão de teste).
 
    O iPhone (Host) manda a câmera para o PC (Guest) por WebRTC, direto de um aparelho para o outro.
    O pareamento usa o servidor público do PeerJS (lib/peerjs.min.js): o Guest se registra como
-   "inkterminal-webcam-<código>" e mostra um QR code com ?host=<código>; o Host liga para ele.
+   "inkdoshub-webcam-<código>" e mostra um QR code com ?host=<código>; o Host liga para ele.
    No PC, a imagem vira webcam do Windows pelo OBS (fonte de navegador com ?guest=<código>&obs=1 e
    "Iniciar câmera virtual").
 
@@ -14,9 +14,9 @@
     return p ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in p ? p[k] : m; }) : s;
   };
   var $ = function (id) { return document.getElementById(id); };
-  var PREFIXO = "inkterminal-webcam-";
-  var CHAVE_CODIGO = "inkterminal-webcam-codigo";
-  var CHAVE_HOST = "inkterminal-webcam-host";
+  var PREFIXO = "inkdoshub-webcam-";
+  var CHAVE_CODIGO = "inkdoshub-webcam-codigo";
+  var CHAVE_HOST = "inkdoshub-webcam-host";
   var LETRAS = "abcdefghjkmnpqrstuvwxyz23456789";
   var BASE = location.origin + location.pathname;
   var QUALIDADES = {

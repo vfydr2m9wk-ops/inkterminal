@@ -11,7 +11,7 @@
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>InkTerminalWebcamTest</string>
+  <string>InkDOSHubWebcamTest</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -21,7 +21,7 @@
   <key>LSRequiresIPhoneOS</key>
   <true/>
   <key>NSCameraUsageDescription</key>
-  <string>InkTerminal uses the camera to test native 4K60 capture capability.</string>
+  <string>InkDOS Hub uses the camera to test native 4K60 capture capability.</string>
   <key>UILaunchScreen</key>
   <dict/>
   <key>UISupportedInterfaceOrientations</key>

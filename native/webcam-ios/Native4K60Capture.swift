@@ -41,7 +41,7 @@ public final class Native4K60Capture: NSObject {
     }
 
     private let session = AVCaptureSession()
-    private let outputQueue = DispatchQueue(label: "inkterminal.webcam.capture", qos: .userInteractive)
+    private let outputQueue = DispatchQueue(label: "inkdoshub.webcam.capture", qos: .userInteractive)
     private var selectedWidth = 0
     private var selectedHeight = 0
     private var deliveredFrames: UInt64 = 0

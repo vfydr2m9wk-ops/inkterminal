@@ -73,7 +73,7 @@ final class CaptureTestModel: ObservableObject {
 }
 
 @main
-struct InkTerminalWebcamApp: App {
+struct InkDOSHubWebcamApp: App {
     var body: some Scene {
         WindowGroup {
             CaptureTestView()
@@ -88,7 +88,7 @@ struct CaptureTestView: View {
         VStack(spacing: 18) {
             Image(systemName: "web.camera.fill")
                 .font(.system(size: 48))
-            Text("InkTerminal")
+            Text("InkDOS Hub")
                 .font(.largeTitle.bold())
             Text("Teste nativo de captura 4K60")
                 .font(.headline)
