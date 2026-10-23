@@ -1,13 +1,14 @@
 name: Native webcam spike
 
 on:
-  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
     paths:
       - 'native/webcam-ios/**'
       - '.github/workflows/native-webcam-spike.yml'
-  push:
-    branches:
-      - 'experiment/native-webcam-4k60'
+  pull_request:
     paths:
       - 'native/webcam-ios/**'
       - '.github/workflows/native-webcam-spike.yml'
@@ -17,8 +18,36 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show Swift version
-        run: swift --version
-      - name: Build native capture package
+
+      - name: Show Xcode and Swift versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Build package on macOS (CI smoke test)
         working-directory: native/webcam-ios
         run: swift build
+
+      - name: Build package for iOS Simulator
+        working-directory: native/webcam-ios
+        run: |
+          xcodebuild \
+            -scheme NativeWebcamCapture \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/inkterminal-ios-simulator-build" \
+            build
+
+      - name: Package source for manual testing
+        run: |
+          mkdir -p "$RUNNER_TEMP/inkterminal-webcam-test"
+          cp -R native/webcam-ios "$RUNNER_TEMP/inkterminal-webcam-test/"
+          cd "$RUNNER_TEMP"
+          zip -r inkterminal-native-webcam-source.zip inkterminal-webcam-test
+
+      - name: Upload test source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkterminal-native-webcam-test-source
+          path: ${{ runner.temp }}/inkterminal-native-webcam-source.zip
+          if-no-files-found: error
+          retention-days: 14
