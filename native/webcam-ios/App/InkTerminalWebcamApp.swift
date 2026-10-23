@@ -11,7 +11,6 @@ final class CaptureTestModel: ObservableObject {
     @Published var isRunning = false
 
     private var capture: Native4K60Capture?
-    private var startedAt: Date?
     private var lastFrameCount = 0
     private var lastSampleAt = Date()
 
@@ -57,7 +56,6 @@ final class CaptureTestModel: ObservableObject {
             try camera.start()
             capture = camera
             isRunning = true
-            startedAt = Date()
             lastSampleAt = Date()
             lastFrameCount = delivered
             status = "Câmera iniciada; aguardando quadros…"
@@ -74,6 +72,7 @@ final class CaptureTestModel: ObservableObject {
     }
 }
 
+@main
 struct InkTerminalWebcamApp: App {
     var body: some Scene {
         WindowGroup {
