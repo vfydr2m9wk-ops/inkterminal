@@ -8,10 +8,13 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: App
-      - path: Native4K60Capture.swift
+      - path: .
+        excludes:
+          - project.yml
+          - Info.plist
+      - path: ../Native4K60Capture.swift
     info:
-      path: App/Info.plist
+      path: Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.inkterminal.webcamtest
