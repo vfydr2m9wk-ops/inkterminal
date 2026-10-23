@@ -10,8 +10,8 @@ Prove whether the target iPhone can produce sustained 3840×2160 at 60 fps from 
 
 - Enumerate camera formats and select a format whose dimensions are exactly 3840×2160 and whose supported frame-rate range includes 60 fps.
 - Request bi-planar Y'CbCr output (NV12-compatible) to avoid forcing BGRA/RGBA at capture.
-- Configure a real-time hardware H.264 VideoToolbox compression session.
-- Expose encoded access units and timestamps through a callback seam for a later native WebRTC sender.
+- Expose NV12-compatible CVPixelBuffers and monotonic presentation timestamps for the native WebRTC camera source; let WebRTC's VideoToolbox-backed encoder handle encoding to avoid a separate encode/packetize/re-encode path.
+- Expose raw camera frames and timestamps through a callback seam for a native WebRTC capturer/source adapter.
 - Fail clearly if the device cannot supply the requested format or hardware encoder.
 
 ## Not yet implemented
@@ -25,7 +25,7 @@ Do not call this a working webcam yet. This is the first high-risk vertical slic
 
 ## Integration contract
 
-The future WebRTC layer should consume EncodedAccessUnit values with monotonic presentation timestamps and codec configuration (SPS/PPS) delivered by the encoder. Prefer a WebRTC implementation that can accept native encoded frames without re-encoding; if the chosen API requires decoded frames, revisit the architecture rather than silently introducing an expensive pixel conversion.
+The future WebRTC layer should wrap each CVPixelBuffer as an RTCVideoFrame without converting it to RGBA, preserve presentation timestamps, and use WebRTC's hardware-backed VideoToolbox encoder. Verify actual encoder implementation and output dimensions/FPS through WebRTC stats. Do not add an independent encoder unless a measured benefit justifies the added RTP packetization complexity.
 
 ## Physical acceptance test
 
