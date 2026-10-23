@@ -67,8 +67,10 @@ public final class Native4K60Capture: NSObject {
                 return isBiPlanar && dimensions.width == 3840 && dimensions.height == 2160 &&
                     $0.videoSupportedFrameRateRanges.contains { $0.minFrameRate <= 60 && $0.maxFrameRate >= 60 }
             })
-            .sorted(by: {
-                CMFormatDescriptionGetMediaSubType($0.formatDescription) == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+            .sorted(by: { lhs, rhs in
+                let lhsPreferred = CMFormatDescriptionGetMediaSubType(lhs.formatDescription) == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+                let rhsPreferred = CMFormatDescriptionGetMediaSubType(rhs.formatDescription) == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+                return lhsPreferred && !rhsPreferred
             }).first else { throw NativeCaptureError.no4K60Format }
 
         try device.lockForConfiguration()
@@ -79,7 +81,9 @@ public final class Native4K60Capture: NSObject {
 
         let input = try AVCaptureDeviceInput(device: device)
         session.beginConfiguration()
+        #if os(iOS)
         session.sessionPreset = .inputPriority
+        #endif
         guard session.canAddInput(input) else { session.commitConfiguration(); throw NativeCaptureError.cannotAddInput }
         session.addInput(input)
 
