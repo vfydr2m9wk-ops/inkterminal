@@ -4,15 +4,15 @@ This folder is an isolated, experimental native path. It does not replace the cu
 
 ## Goal
 
-Prove whether the target iPhone can produce sustained 3840×2160 at 60 fps from AVFoundation and a hardware VideoToolbox encoder before integrating transport. A requested profile is not treated as proof: the spike reports the active capture format and observed sample cadence.
+Prove whether the target iPhone can expose 3840×2160 at 60 fps from AVFoundation before integrating native WebRTC. A requested profile is not treated as proof: the spike selects only a compatible active format and reports delivered/dropped sample counts.
 
 ## Current scope
 
 - Enumerate camera formats and select a format whose dimensions are exactly 3840×2160 and whose supported frame-rate range includes 60 fps.
 - Request bi-planar Y'CbCr output (NV12-compatible) to avoid forcing BGRA/RGBA at capture.
-- Expose NV12-compatible CVPixelBuffers and monotonic presentation timestamps for the native WebRTC camera source; let WebRTC's VideoToolbox-backed encoder handle encoding to avoid a separate encode/packetize/re-encode path.
+- Expose NV12-compatible CVPixelBuffers and presentation timestamps for the native WebRTC camera source; let WebRTC's VideoToolbox-backed encoder handle encoding to avoid a separate encode/packetize/re-encode path.
 - Expose raw camera frames and timestamps through a callback seam for a native WebRTC capturer/source adapter.
-- Fail clearly if the device cannot supply the requested format or hardware encoder.
+- Fail clearly if the device cannot supply the requested camera format.
 
 ## Not yet implemented
 
@@ -21,7 +21,7 @@ Prove whether the target iPhone can produce sustained 3840×2160 at 60 fps from 
 - Windows native WebRTC receiver and Media Foundation Virtual Camera.
 - End-to-end 4K60 test on a physical iPhone + Windows consumer app.
 
-Do not call this a working webcam yet. This is the first high-risk vertical slice: camera format → hardware encoder. The transport and Windows output must follow in separate commits and stay opt-in until measured.
+Do not call this a working webcam yet. This is the first high-risk vertical slice: camera format → native NV12 frames. WebRTC encoding, transport, and Windows output must follow in separate commits. The transport and Windows output must follow in separate commits and stay opt-in until measured.
 
 ## Integration contract
 
@@ -29,4 +29,4 @@ The future WebRTC layer should wrap each CVPixelBuffer as an RTCVideoFrame witho
 
 ## Physical acceptance test
 
-Run for at least 10 minutes with screen unlocked and device thermals monitored. Record active width/height, observed input fps, encoder output fps, bitrate, dropped frames, keyframe cadence, memory, and thermal state. Report measured results separately from estimates.
+Run for at least 10 minutes with screen unlocked and device thermals monitored. Record active width/height, observed capture fps, WebRTC encoded fps/codec/bitrate, decoded and delivered fps, dropped frames, frame age, memory, and thermal state. Report measured results separately from estimates.
